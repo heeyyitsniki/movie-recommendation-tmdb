@@ -1,52 +1,74 @@
+import pickle
 import streamlit as st
-from src.data_prep import get_new_df
-from src.recommend import build_similarity, recommend
 
-st.set_page_config(page_title="Movie Recommendation System", page_icon="🎬", layout="wide")
+from src.recommend import recommend
+from src.tmdb_api import fetch_poster
+
+st.set_page_config(
+    page_title="Movie Recommendation System",
+    page_icon="🎬",
+    layout="wide",
+)
+
+st.title("🎬 Movie Recommendation System")
+st.write("Select a movie and get similar movie recommendations with posters.")
+
 
 @st.cache_data
 def load_data():
-    return get_new_df()
+    # movies dataframe: must contain at least 'movie_id' and 'title'
+    with open("artifacts_movies.pkl", "rb") as f:
+        movies = pickle.load(f)
+    return movies
+
 
 @st.cache_resource
-def load_model(df):
-    return build_similarity(df)
+def load_model():
+    # cosine similarity matrix
+    with open("artifacts_similarity.pkl", "rb") as f:
+        similarity = pickle.load(f)
+    return similarity
+
 
 def main():
-    # --- Title (centered, like Figma) ---
-    st.markdown("<h1 style='text-align: center;'>Movie Recommendation System</h1>", unsafe_allow_html=True)
+    movies = load_data()
+    similarity = load_model()
 
-    st.write("")  # small gap
+    movie_list = movies["title"].values
 
-    # --- Subtitle text ---
-    st.subheader("How you would like to be recommended?")
+    selected_movie = st.selectbox(
+        "Type or select a movie from the dropdown",
+        movie_list,
+    )
 
-    # --- Load data and model ---
-    df = load_data()
-    similarity = load_model(df)
-
-    # --- Dropdown for movie names ---
-    movie_list = sorted(df["title"].unique().tolist())
-    selected_movie = st.selectbox("Movie names dropdown", movie_list)
-
-    # --- Recommend button ---
     if st.button("Recommend"):
-        recs = recommend(selected_movie, df, similarity, top_n=5)
-
-        if not recs:
-            st.warning("No recommendations found.")
-            return
-
-        st.write("")  # gap
-
-        # --- Show 5 recommended movies in a row (like cards) ---
-        st.subheader("Recommended movies:")
+        # returns: names, indices
+        names, indices = recommend(selected_movie, movies, similarity)
 
         cols = st.columns(5)
-        for i, title in enumerate(recs):
-            with cols[i]:
-                st.write(f"**Movie Name {i+1}**")
-                st.write(title)
+        for idx, col in enumerate(cols):
+            if idx < len(indices):
+                movie_index = indices[idx]
+                movie_id = movies.iloc[movie_index].movie_id
+                poster_url = fetch_poster(int(movie_id))
+
+                with col:
+                    st.caption(names[idx])
+                    if poster_url:
+                        st.image(poster_url, use_container_width=True)
+                    else:
+                        st.write("(No poster available)")
+
+    st.markdown(
+        """
+        <hr>
+        <p style="text-align:center; color:gray; font-size:14px;">
+        Developed by <b>Team ML4TECH</b>
+        </p>
+        """,
+        unsafe_allow_html=True,
+    )
+
 
 if __name__ == "__main__":
     main()
