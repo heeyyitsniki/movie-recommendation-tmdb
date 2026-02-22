@@ -1,5 +1,7 @@
 streamlit
+pickle
 pandas
 numpy
 scikit-learn
-mysql-connector-python
+os 
+requests

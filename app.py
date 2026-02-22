@@ -55,7 +55,7 @@ def main():
                 with col:
                     st.caption(names[idx])
                     if poster_url:
-                        st.image(poster_url, use_container_width=True)
+                        st.image(poster_url, width="content")
                     else:
                         st.write("(No poster available)")
 
