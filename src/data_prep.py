@@ -1,7 +1,11 @@
 import numpy as np
 import pandas as pd
-movies = pd.read_csv(r'C:\Users\mitali\OneDrive\Documents\GitHub\movie-recommendation-tmdb\data\tmdb_5000_credits.csv')
-credits = pd.read_csv(r'C:\Users\mitali\OneDrive\Documents\GitHub\movie-recommendation-tmdb\data\tmdb_5000_movies.csv')
+import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(__file__)) # project root
+
+movies = pd.read_csv(os.path.join(BASE_DIR, "data", "tmdb_5000_credits.csv"))
+credits = pd.read_csv(os.path.join(BASE_DIR, "data", "tmdb_5000_movies.csv"))
 
 movies = movies.merge(credits, on = 'title')
 

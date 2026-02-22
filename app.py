@@ -1,8 +1,10 @@
-import pickle
 import streamlit as st
+import pandas as pd
 
-from src.recommend import recommend
+from src.data_prep import get_new_df
+from src.recommend import build_similarity, recommend
 from src.tmdb_api import fetch_poster
+
 
 st.set_page_config(
     page_title="Movie Recommendation System",
@@ -16,23 +18,20 @@ st.write("Select a movie and get similar movie recommendations with posters.")
 
 @st.cache_data
 def load_data():
-    # movies dataframe: must contain at least 'movie_id' and 'title'
-    with open("artifacts_movies.pkl", "rb") as f:
-        movies = pickle.load(f)
-    return movies
+    # builds new_df: movie_id, title, tags
+    df = get_new_df()
+    return df
 
 
 @st.cache_resource
-def load_model():
-    # cosine similarity matrix
-    with open("artifacts_similarity.pkl", "rb") as f:
-        similarity = pickle.load(f)
+def load_model(df: pd.DataFrame):
+    similarity = build_similarity(df)
     return similarity
 
 
 def main():
     movies = load_data()
-    similarity = load_model()
+    similarity = load_model(movies)
 
     movie_list = movies["title"].values
 
@@ -42,7 +41,6 @@ def main():
     )
 
     if st.button("Recommend"):
-        # returns: names, indices
         names, indices = recommend(selected_movie, movies, similarity)
 
         cols = st.columns(5)
@@ -55,7 +53,7 @@ def main():
                 with col:
                     st.caption(names[idx])
                     if poster_url:
-                        st.image(poster_url, width="content")
+                        st.image(poster_url, use_container_width=True)
                     else:
                         st.write("(No poster available)")
 
