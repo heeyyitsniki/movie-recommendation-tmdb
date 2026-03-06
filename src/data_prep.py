@@ -41,7 +41,7 @@ def fetch_director(obj):
             L.append(i['name'])
             break
     return L
-movies['crew'] = movies['crew'].apply(convert3)
+movies['crew'] = movies['crew'].apply(fetch_director)
 
 movies['overview'] = movies['overview'].apply(lambda x:x.split())
 
